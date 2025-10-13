@@ -72,7 +72,7 @@ contract TokenVoting is IMembership, MajorityVotingBase {
         uint256 _minApprovals,
         bytes calldata _pluginMetadata,
         address[] memory _excludedAccounts
-    ) external onlyCallAtInitialization reinitializer(3) {
+    ) public virtual onlyCallAtInitialization reinitializer(3) {
         __MajorityVotingBase_init(_dao, _votingSettings, _targetConfig, _minApprovals, _pluginMetadata);
 
         votingToken = _token;
