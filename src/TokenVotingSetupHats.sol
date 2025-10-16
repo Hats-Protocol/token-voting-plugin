@@ -238,7 +238,7 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
         override
         returns (PermissionLib.MultiTargetPermission[] memory permissions)
     {
-        permissions = new PermissionLib.MultiTargetPermission[](6);
+        permissions = new PermissionLib.MultiTargetPermission[](7);
 
         permissions[0] = PermissionLib.MultiTargetPermission({
             operation: PermissionLib.Operation.Revoke,
@@ -277,10 +277,18 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
             where: _payload.plugin,
             who: ANY_ADDR,
             condition: PermissionLib.NO_CONDITION,
-            permissionId: tokenVotingHatsBase.CREATE_PROPOSAL_PERMISSION_ID()
+            permissionId: tokenVotingHatsBase.CAST_VOTE_PERMISSION_ID()
         });
 
         permissions[5] = PermissionLib.MultiTargetPermission({
+            operation: PermissionLib.Operation.Revoke,
+            where: _payload.plugin,
+            who: ANY_ADDR,
+            condition: PermissionLib.NO_CONDITION,
+            permissionId: tokenVotingHatsBase.CREATE_PROPOSAL_PERMISSION_ID()
+        });
+
+        permissions[6] = PermissionLib.MultiTargetPermission({
             operation: PermissionLib.Operation.Revoke,
             where: _payload.plugin,
             who: ANY_ADDR,
