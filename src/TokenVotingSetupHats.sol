@@ -10,7 +10,7 @@ import {IVotesUpgradeable} from "@openzeppelin/contracts-upgradeable/governance/
 
 import {GovernanceERC20} from "./erc20/GovernanceERC20.sol";
 import {GovernanceWrappedERC20} from "./erc20/GovernanceWrappedERC20.sol";
-import {TokenVotingHats} from "./TokenVotingHats.sol";
+import {TokenVoting, TokenVotingHats} from "./TokenVotingHats.sol";
 import {HatsCondition} from "./condition/HatsCondition.sol";
 import {MajorityVotingBase} from "./base/MajorityVotingBase.sol";
 
@@ -30,7 +30,6 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
     using ERC165Checker for address;
     using ProxyLib for address;
 
-    uint16 internal constant THIS_BUILD = 1;
 
     bytes32 private constant EXECUTE_PERMISSION_ID = keccak256("EXECUTE_PERMISSION");
     bytes32 private constant SET_TARGET_CONFIG_PERMISSION_ID = keccak256("SET_TARGET_CONFIG_PERMISSION");
@@ -111,29 +110,29 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
 
             if (!supportsIVotesInterface(token)) {
                 token = governanceWrappedERC20Base.clone();
-                GovernanceWrappedERC20(token).initialize(
-                    IERC20Upgradeable(tokenSettings.addr), tokenSettings.name, tokenSettings.symbol
-                );
+                GovernanceWrappedERC20(token)
+                    .initialize(IERC20Upgradeable(tokenSettings.addr), tokenSettings.name, tokenSettings.symbol);
             }
         } else {
             token = governanceERC20Base.clone();
             GovernanceERC20(token).initialize(IDAO(_dao), tokenSettings.name, tokenSettings.symbol, params.mintSettings);
         }
 
-        plugin = address(tokenVotingHatsBase).deployUUPSProxy(
-            abi.encodeCall(
-                TokenVotingHats.initialize,
-                (
-                    IDAO(_dao),
-                    params.votingSettings,
-                    IVotesUpgradeable(token),
-                    params.targetConfig,
-                    params.minApprovals,
-                    params.pluginMetadata,
-                    params.excludedAccounts
+        plugin = address(tokenVotingHatsBase)
+            .deployUUPSProxy(
+                abi.encodeCall(
+                    tokenVotingHatsBase.initialize,
+                    (
+                        IDAO(_dao),
+                        params.votingSettings,
+                        IVotesUpgradeable(token),
+                        params.targetConfig,
+                        params.minApprovals,
+                        params.pluginMetadata,
+                        params.excludedAccounts
+                    )
                 )
-            )
-        );
+            );
 
         address hatsCondition =
             address(new HatsCondition(hatsConfig.proposerHatId, hatsConfig.voterHatId, hatsConfig.executorHatId));
@@ -225,10 +224,13 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
         external
         pure
         override
-        returns (bytes memory, /* initData */ PreparedSetupData memory /* preparedSetupData */ )
+        returns (
+            bytes memory, /* initData */
+            PreparedSetupData memory /* preparedSetupData */
+        )
     {
         (_dao, _fromBuild, _payload);
-        revert InvalidUpdatePath({fromBuild: _fromBuild, thisBuild: THIS_BUILD});
+        revert InvalidUpdatePath({fromBuild: _fromBuild, thisBuild: 1});
     }
 
     /// @inheritdoc IPluginSetup
@@ -238,7 +240,12 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
         override
         returns (PermissionLib.MultiTargetPermission[] memory permissions)
     {
-        permissions = new PermissionLib.MultiTargetPermission[](7);
+        // Check if MINT permission was granted to the DAO on the token
+        address token = _payload.currentHelpers[1];
+        bool hasMintPermission = _hasMintPermission(token, _dao);
+        uint256 permissionCount = hasMintPermission ? 8 : 7;
+
+        permissions = new PermissionLib.MultiTargetPermission[](permissionCount);
 
         permissions[0] = PermissionLib.MultiTargetPermission({
             operation: PermissionLib.Operation.Revoke,
@@ -295,6 +302,18 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
             condition: PermissionLib.NO_CONDITION,
             permissionId: tokenVotingHatsBase.EXECUTE_PROPOSAL_PERMISSION_ID()
         });
+
+        // If MINT permission was granted during installation, revoke it
+        if (hasMintPermission) {
+            bytes32 tokenMintPermission = GovernanceERC20(token).MINT_PERMISSION_ID();
+            permissions[7] = PermissionLib.MultiTargetPermission({
+                operation: PermissionLib.Operation.Revoke,
+                where: token,
+                who: _dao,
+                condition: PermissionLib.NO_CONDITION,
+                permissionId: tokenMintPermission
+            });
+        }
     }
 
     /// @notice Encodes installation parameters including Hats configuration.
@@ -329,6 +348,20 @@ contract TokenVotingSetupHats is PluginUpgradeableSetup {
         returns (InstallationParameters memory params)
     {
         return abi.decode(_data, (InstallationParameters));
+    }
+
+    /// @notice Checks if the DAO has MINT permission on the token.
+    /// @dev Directly checks the permission rather than inferring from token type.
+    /// @param token The token address to check.
+    /// @param dao The DAO address.
+    /// @return True if the DAO has MINT permission on the token, false otherwise.
+    function _hasMintPermission(address token, address dao) internal view returns (bool) {
+        try GovernanceERC20(token).MINT_PERMISSION_ID() returns (bytes32 mintPermission) {
+            return IDAO(dao).hasPermission(token, dao, mintPermission, "");
+        } catch {
+            // If MINT_PERMISSION_ID() call fails, it's not a GovernanceERC20
+            return false;
+        }
     }
 
     /// @notice Checks whether the provided token exposes the required IVotes interface.
