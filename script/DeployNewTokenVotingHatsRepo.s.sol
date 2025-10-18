@@ -71,7 +71,7 @@ contract DeployNewTokenVotingHatsRepoScript is Script {
 
         // Using a random subdomain if empty
         if (bytes(pluginEnsSubdomain).length == 0) {
-            pluginEnsSubdomain = string.concat("my-token-voting-plugin-", vm.toString(block.timestamp));
+            pluginEnsSubdomain = string.concat("my-token-voting-hats-plugin-", vm.toString(block.timestamp));
         }
 
         pluginRepoMaintainerAddress = vm.envAddress("PLUGIN_REPO_MAINTAINER_ADDRESS");
