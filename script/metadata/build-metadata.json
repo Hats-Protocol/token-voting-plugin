@@ -1,6 +1,6 @@
 {
   "ui": {},
-  "change": "v1.4\n - Supporting tokens that index based on timestamp.\n- Allowing to freeze token minting.\n- Allowing to exclude addresses from the total supply.",
+  "change": "v1.0\n - Supporting Hats-based permission conditions.",
   "pluginSetup": {
     "prepareInstallation": {
       "description": "The information required for the installation.",
@@ -64,7 +64,7 @@
               "description": "The token symbol. This parameter is only relevant if the token address is `address(0)`."
             }
           ],
-          "internalType": "struct TokenVotingSetup.TokenSettings",
+          "internalType": "struct TokenVotingSetupHats.TokenSettings",
           "name": "tokenSettings",
           "type": "tuple",
           "description": "The token settings that either specify an existing ERC-20 token (`token = address(0)`) or the name and symbol of a new `GovernanceERC20` token to be created."
@@ -104,7 +104,7 @@
               "description": "The operation type(either `call` or `delegatecall`) that will be used for execution forwarding."
             }
           ],
-          "internalType": "struct TokenVoting.TargetConfig",
+          "internalType": "struct TokenVotingHats.TargetConfig",
           "name": "TargetConfig",
           "type": "tuple",
           "description": "The initial target config"
@@ -126,92 +126,35 @@
           "type": "address[]",
           "internalType": "address[]",
           "description": "The accounts to exclude from the token supply computation."
+        },
+        {
+          "components": [
+            {
+              "name": "proposerHatId",
+              "type": "uint256",
+              "internalType": "uint256",
+              "description": "The ID of the hat that is required to create proposals."
+            },
+
+            {
+              "name": "voterHatId",
+              "type": "uint256",
+              "internalType": "uint256",
+              "description": "The ID of the hat that is required to vote on proposals."
+            },
+            {
+              "name": "executorHatId",
+              "type": "uint256",
+              "internalType": "uint256",
+              "description": "The ID of the hat that is required to execute proposals."
+            }
+          ],
+          "name": "hatsConfig",
+          "type": "tuple",
+          "internalType": "struct TokenVotingSetupHats.HatsConfig",
+          "description": "The Hats configuration."
         }
       ]
-    },
-    "prepareUpdate": {
-      "1": {
-        "description": "No input is required for the update.",
-        "inputs": []
-      },
-      "2": {
-        "description": "No input is required for the update.",
-        "inputs": []
-      },
-      "3": {
-        "description": "The information required for the update.",
-        "inputs": [
-          {
-            "name": "minApprovals",
-            "type": "uint256",
-            "internalType": "uint256",
-            "description": "The minimum amount of yes votes needed for the proposal advance."
-          },
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "target",
-                "type": "address",
-                "description": "The target contract to which actions will be forwarded to for execution."
-              },
-              {
-                "internalType": "uint8",
-                "name": "operation",
-                "type": "uint8",
-                "description": "The operation type(either `call` or `delegatecall`) that will be used for execution forwarding."
-              }
-            ],
-            "internalType": "struct TokenVoting.TargetConfig",
-            "name": "TargetConfig",
-            "type": "tuple",
-            "description": "The initial target config"
-          },
-          {
-            "internalType": "bytes",
-            "name": "metadata",
-            "type": "bytes",
-            "description": "The metadata that contains the information about the token voting plugin."
-          }
-        ]
-      },
-      "4": {
-        "description": "The information required for the update.",
-        "inputs": [
-          {
-            "name": "minApprovals",
-            "type": "uint256",
-            "internalType": "uint256",
-            "description": "The minimum amount of yes votes needed for the proposal advance."
-          },
-          {
-            "components": [
-              {
-                "internalType": "address",
-                "name": "target",
-                "type": "address",
-                "description": "The target contract to which actions will be forwarded to for execution."
-              },
-              {
-                "internalType": "uint8",
-                "name": "operation",
-                "type": "uint8",
-                "description": "The operation type(either `call` or `delegatecall`) that will be used for execution forwarding."
-              }
-            ],
-            "internalType": "struct TokenVoting.TargetConfig",
-            "name": "TargetConfig",
-            "type": "tuple",
-            "description": "The initial target config"
-          },
-          {
-            "internalType": "bytes",
-            "name": "metadata",
-            "type": "bytes",
-            "description": "The metadata that contains the information about the token voting plugin."
-          }
-        ]
-      }
     },
     "prepareUninstallation": {
       "description": "No input is required for the uninstallation.",

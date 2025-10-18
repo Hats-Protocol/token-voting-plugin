@@ -1,1 +1,5 @@
-{ "name": "TokenVoting", "description": "", "images": {} }
+{
+  "name": "TokenVotingHats",
+  "description": "Token voting plugin variant that relies on Hats-based permission conditions.",
+  "images": {}
+}

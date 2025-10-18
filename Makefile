@@ -9,7 +9,7 @@ SHELL:=/bin/bash
 # CONSTANTS
 
 # NOTE: Choose the appropriate deployment script
-DEPLOYMENT_SCRIPT := DeployTokenVoting_1_4
+DEPLOYMENT_SCRIPT := DeployNewTokenVotingHatsRepo
 # DEPLOYMENT_SCRIPT := DeployNewTokenVotingRepo
 
 SOLC_VERSION := $(shell cat foundry.toml | grep solc | cut -d= -f2 | xargs echo || echo "0.8.28")
